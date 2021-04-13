@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import datetime
 
 games = pd.read_csv('games_flat_xml_2012-2018.csv')
