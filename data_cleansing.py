@@ -6,8 +6,10 @@ import pandas as pd
 # read in data
 
 ratings = pd.read_csv("TV_Ratings_onesheet.csv")
-games = pd.read_csv("games_flat_xml_2012-2018.csv")
+ratings.columns = ratings.columns.str.replace(' ', '').str.lower()
 
+games = pd.read_csv("games_flat_xml_2012-2018.csv")
+games.columns = games.columns.str.replace(' ', '').str.lower()
 
 # drop unecessary columns
 
@@ -22,6 +24,8 @@ for col in games.columns:
     elif 'penalties' in col:
         badcols.append(col)
     elif 'fumble' in col:
+        badcols.append(col)
+    elif 'matchupteam' in col:
         badcols.append(col)
 
 games = games.drop(badcols, axis=1)
@@ -64,4 +68,7 @@ for row in weather:
 
 games['weather_clean'] = cleaned_weather
 
-# join on ?
+
+# join on home team id and date
+
+
