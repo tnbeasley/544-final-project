@@ -76,6 +76,21 @@ for row in weather:
 
 games['weather_clean'] = cleaned_weather
 
+sec_east = ['Vanderbilt', 'Tennessee', 'South Carolina', 
+            'Missouri', 'Kentucky', 'Georgia', 'Florida']
+sec_west = ['Alabama', 'Arkansas', 'Auburn', 'LSU', 
+            'Mississippi (Ole Miss)', 'Mississippi State', 'Texas A&M']
+home = list(games['homename'])
+league = []
+for i in range(0, len(east)):
+    if home[i] in sec_east:
+        league.append('SEC_EAST')
+    elif home[i] in sec_west:
+        league.append('SEC_WEST')
+    else:
+        league.append('INTERDIVISIONAL')
+        
+games['league'] = league
 
 # join on home team id and date
 df = pd.merge(
