@@ -23,6 +23,7 @@ helpModal = dbc.Modal([
 
 app.layout = dbc.Container(children = [
     helpModal,
+    
     dbc.Row(children = [
         dbc.Col(children = [
             html.Br(),
@@ -39,7 +40,6 @@ app.layout = dbc.Container(children = [
                     dcc.Dropdown(id = 'selectedTeam')
                 ], width = 8)
             ])
-            
         ], width = 4),
         dbc.Col(children = [
             html.Br(),
@@ -53,14 +53,33 @@ app.layout = dbc.Container(children = [
                 'vertical-align': 'top',
                 'float' : 'right',
                 'position' : 'relative',
-                'padding-top' : 5,
+                'padding-top' : 10,
                 'padding-right' : 0,
                 'padding-left':0,
                 'padding-bottom':0
             })
         ], width = 1, style = {'text-align':'right'})
     ]),
+    
     html.Hr(style = {'background-color':'white'}),
+    
+    dbc.Row(children = [
+        dbc.Col(children = [
+            dbc.Col(children = [
+                dbc.Tabs(children = [
+                    dbc.Tab(label = 'Tab 1', tab_id = 'tab-1'),
+                    dbc.Tab(label = "Tab 2", tab_id = "tab-2")
+                ], id = 'tabs', active_tab = 'tab-1')    
+            ], width = {'size':10, 'offset':1})
+        ], width = 8),
+        dbc.Col(children = [
+            dbc.Jumbotron(children = [
+                dbc.Container([
+                    
+                ], fluid = True)
+            ], fluid = True)
+        ], width = 4)
+    ])
 ], fluid = True)
 
 @app.callback(
