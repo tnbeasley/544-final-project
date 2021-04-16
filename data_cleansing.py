@@ -5,14 +5,16 @@ import numpy as np
 
 
 # read in data
-
 ratings = pd.read_csv("TV_Ratings_onesheet.csv")
 ratings.columns = ratings.columns.str.replace(' ', '').str.lower()
 ratings_key_cols = ['hometeamid', 'date']
+ratings['date'] = pd.to_datetime(ratings.date)
 
 games = pd.read_csv("games_flat_xml_2012-2018.csv")
 games.columns = games.columns.str.replace(' ', '').str.lower()
 game_key_cols = ['homeid', 'date']
+games['date'] = pd.to_datetime(games.date)
+
 
 # drop unecessary columns
 badcols = []
@@ -37,6 +39,10 @@ dupcols = dupcols[[i not in game_key_cols for i in dupcols]].values.tolist()
 dropcols = badcols + dupcols
 
 games = games.drop(dropcols, axis=1)
+
+
+# add season variable
+
 
 # clean weather column
 
@@ -82,7 +88,7 @@ sec_west = ['Alabama', 'Arkansas', 'Auburn', 'LSU',
             'Mississippi (Ole Miss)', 'Mississippi State', 'Texas A&M']
 home = list(games['homename'])
 league = []
-for i in range(0, len(east)):
+for i in range(0, len(home)):
     if home[i] in sec_east:
         league.append('SEC_EAST')
     elif home[i] in sec_west:
