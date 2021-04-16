@@ -42,7 +42,7 @@ games = games.drop(dropcols, axis=1)
 
 
 # add season variable
-
+games['season'] = np.where(games.date.dt.month < 6, games.date.dt.year - 1, games.date.dt.year)
 
 # clean weather column
 
