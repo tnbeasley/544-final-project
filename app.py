@@ -127,10 +127,20 @@ app.layout = dbc.Container(children = [
         dbc.Col(children = [
             dbc.Col(children = [
                 dbc.Tabs(children = [
-                    dbc.Tab(label = 'Tab 1', tab_id = 'tab-1'),
-                    dbc.Tab(label = "Tab 2", tab_id = "tab-2")
+                    dbc.Tab(label = 'Rank', tab_id = 'rank-tab', children = [
+                        
+                    ]),
+                    dbc.Tab(label = "Weather", tab_id = "weather-tab", children = [
+                        html.H1("Test")
+                    ]), # weather, temperature, time of day
+                    dbc.Tab(label = "Network", tab_id = "network-tab", children = [
+                        
+                    ]),
+                    dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
+                        
+                    ])
                 ], id = 'tabs', active_tab = 'tab-1')    
-            ], width = {'size':10, 'offset':1})
+            ], width = {'size':12})
         ], width = 7),
         
         dbc.Col(children = [
