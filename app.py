@@ -8,6 +8,9 @@ import dash_daq as daq
 import pandas as pd
 import numpy as np
 
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+
 teamColorsDict = {
     'UA':'#A60C31', 
     'AR':'#9D2235', 
@@ -55,6 +58,35 @@ team_sum_stats = [{
 team_sum_stats = pd.DataFrame(team_sum_stats)
 sec_sum_stats = team_sum_stats[team_sum_stats.Team.isin(sec_teams)]
 
+sec_season_stats = []
+for team in sec_teams:
+    team_viewers = df_viewers.loc[((df_viewers.hometeamid==team) |\
+                                  (df_viewers.visteamid==team))]\
+        .groupby('season')['viewers'].agg(['mean', 'median'])\
+        .rename({'mean':'AvgViewers', 'median':'MedViewers'}, axis = 'columns')\
+        .reset_index()
+    
+    team_attend = df_attend.loc[((df_attend.hometeamid==team) |\
+                                  (df_attend.visteamid==team))]\
+        .groupby('season')['attend'].agg(['mean', 'median'])\
+        .rename({'mean':'AvgAttend', 'median':'MedAttend'}, axis = 'columns')\
+        .reset_index()
+    
+    team_ratings = df_rating.loc[((df_rating.hometeamid==team) |\
+                                  (df_rating.visteamid==team))]\
+        .groupby('season')['rating'].agg(['mean', 'median'])\
+        .rename({'mean':'AvgRating', 'median':'MedRating'}, axis = 'columns')\
+        .reset_index()
+    
+    team_stats = team_viewers\
+        .merge(team_attend, on = 'season')\
+        .merge(team_ratings, on = 'season')
+    
+    team_stats['team'] = team
+    
+    sec_season_stats.append(team_stats)
+    
+sec_season_stats = pd.concat(sec_season_stats).set_index('team').reset_index()
 
 
 
@@ -163,23 +195,31 @@ app.layout = dbc.Container(children = [
                             daq.Gauge(
                                 id='viewersGauge',
                                 label = 'Viewers',
-                                size=150
+                                size=150,
+                                style = {'color':'black'}
                             )
                         ], width = 4),
                         dbc.Col(children = [
                             daq.Gauge(
                                 id='attendanceGauge',
                                 label = 'Attendance',
-                                size=150
+                                size=150,
+                                style = {'color':'black'}
                             )
                         ], width = 4),
                         dbc.Col(children = [
                             daq.Gauge(
                                 id='ratingsGauge',
                                 label = 'Ratings',
-                                size=150
+                                size=150,
+                                style = {'color':'black'}
                             )
                         ], width = 4)
+                    ]),
+                    dbc.Row(children = [
+                        dbc.Col(children = [
+                            dcc.Graph(id = 'teamStatsPlots')
+                        ], width = 12)
                     ])
                 ])
                 
@@ -199,8 +239,11 @@ def toggle_help_modal(n1, n2, is_open):
         return not is_open
     return is_open
 
+
+
 @app.callback(
-    [Output('viewersGauge', 'value'),
+    [Output('teamStatsPlots', 'figure'),
+     Output('viewersGauge', 'value'),
      Output('viewersGauge', 'min'),
      Output('viewersGauge', 'max'),
      Output('viewersGauge', 'color'),
@@ -215,29 +258,68 @@ def toggle_help_modal(n1, n2, is_open):
     [Input('selectedTeam', 'value'),
      Input('statsChoice', 'value')]
 )
-def create_gauges(selectedTeam, statsChoice):
-    
+def create_right_plots(selectedTeam, statsChoice):
+    #### Columns ####
     viewer_col = np.where(statsChoice == 'avg', 'AvgViewers', 'MedViewers').tolist()
+    attend_col = np.where(statsChoice == 'avg', 'AvgAttend', 'MedAttend').tolist()
+    rating_col = np.where(statsChoice == 'avg', 'AvgRating', 'MedRating').tolist()
+    teamColor = teamColorsDict[selectedTeam]
+    
+    #### Time Series Plots ####
+    team_season_stats = sec_season_stats[sec_season_stats.team == selectedTeam]\
+        .sort_values('season')
+    ts_fig = make_subplots(rows = 3, cols = 1,
+                           shared_xaxes=True,
+                           vertical_spacing=0.05,
+                           subplot_titles=("Viewership", "Attendance", "Ratings"))
+    
+    ts_fig.add_trace(
+        go.Scatter(x=team_season_stats.season, y=team_season_stats[viewer_col],
+                   line = {'width':5, 'color':teamColor}), 
+        row=1, col=1)
+
+    ts_fig.add_trace(
+        go.Scatter(x=team_season_stats.season, y=team_season_stats[attend_col],
+                   line = {'width':5, 'color':teamColor}), 
+        row=2, col=1)
+    
+    ts_fig.add_trace(
+        go.Scatter(x=team_season_stats.season, y=team_season_stats[rating_col],
+                   line = {'width':5, 'color':teamColor}), 
+        row=3, col=1)
+    
+    ts_fig.update_layout(
+        showlegend=False,
+        margin = {'l':0, 'r':0, 't':20, 'b':0},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'rgba(0,0,0,0)',
+        xaxis1 = {'showgrid': False},
+        xaxis2 = {'showgrid': False},
+        xaxis3 = {'showgrid': False},
+        yaxis1 = {'gridcolor':'gray'},
+        yaxis2 = {'gridcolor':'gray'},
+        yaxis3 = {'gridcolor':'gray'}
+    )
+    
+    
+    #### Gauges ####
     viewer_stats = sec_sum_stats.loc[:,['Team', viewer_col]]
     team_viewer_stats = viewer_stats[viewer_stats.Team == selectedTeam]
     min_views = viewer_stats[viewer_col].min()
     max_views = viewer_stats[viewer_col].max()
     
-    attend_col = np.where(statsChoice == 'avg', 'AvgAttend', 'MedAttend').tolist()
     attend_stats = sec_sum_stats.loc[:,['Team', attend_col]]
     team_attend_stats = attend_stats[attend_stats.Team == selectedTeam]
     min_attend = attend_stats[attend_col].min()
     max_attend = attend_stats[attend_col].max()
     
-    rating_col = np.where(statsChoice == 'avg', 'AvgRating', 'MedRating').tolist()
     rating_stats = sec_sum_stats.loc[:,['Team', rating_col]]
     team_rating_stats = rating_stats[rating_stats.Team == selectedTeam]
     min_rating = rating_stats[rating_col].min()
     max_rating = rating_stats[rating_col].max()
     
-    teamColor = teamColorsDict[selectedTeam]
-    
-    return(team_viewer_stats[viewer_col].values[0], min_views, max_views, teamColor,
+    return(ts_fig,
+           team_viewer_stats[viewer_col].values[0], min_views, max_views, teamColor,
            team_attend_stats[attend_col].values[0], min_attend, max_attend, teamColor,
            team_rating_stats[rating_col].values[0], min_rating, max_rating, teamColor)
 
