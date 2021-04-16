@@ -20,6 +20,7 @@ teamColorsDict = {
     'MS':'#660000',
     'MIZZU':'#2C2A29', 
     'SCAR':'#73000A',
+    'TAMU':'#500000',
     'TENN':'#f77f00',
     'VANDY':'#A8996E'
 }
@@ -75,6 +76,7 @@ helpModal = dbc.Modal([
 
 app.layout = dbc.Container(children = [
     helpModal,
+    
     dbc.Row(children = [
         dbc.Col(children = [
             html.Br(),
@@ -98,7 +100,6 @@ app.layout = dbc.Container(children = [
                     )
                 ], width = 8)
             ])
-            
         ], width = 4),
         dbc.Col(children = [
             html.Br(),
@@ -106,25 +107,32 @@ app.layout = dbc.Container(children = [
                        className="ml-auto", color = 'info')
         ], width = 3, style = {'text-align':'right'}),
         dbc.Col(children = [
-            html.Img(src = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Southeastern_Conference_logo.svg', 
-                     style = {
-                         'height' : '75%',
-                         'width' : '75%',
-                         'vertical-align': 'top',
-                         'float' : 'right',
-                         'position' : 'relative',
-                         'padding-top' : 5,
-                         'padding-right' : 0,
-                         'padding-left':0,
-                         'padding-bottom':0
-                     })
+            html.Img(src = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Southeastern_Conference_logo.svg', style = {
+                'height' : '75%',
+                'width' : '75%',
+                'vertical-align': 'top',
+                'float' : 'right',
+                'position' : 'relative',
+                'padding-top' : 10,
+                'padding-right' : 0,
+                'padding-left':0,
+                'padding-bottom':0
+            })
         ], width = 1, style = {'text-align':'right'})
     ]),
+    
     html.Hr(style = {'background-color':'white'}),
+
     dbc.Row(children = [
         dbc.Col(children = [
-            
+            dbc.Col(children = [
+                dbc.Tabs(children = [
+                    dbc.Tab(label = 'Tab 1', tab_id = 'tab-1'),
+                    dbc.Tab(label = "Tab 2", tab_id = "tab-2")
+                ], id = 'tabs', active_tab = 'tab-1')    
+            ], width = {'size':10, 'offset':1})
         ], width = 7),
+        
         dbc.Col(children = [
             dbc.Card(children = [
                 dbc.CardHeader(children = [
