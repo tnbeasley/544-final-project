@@ -21,7 +21,7 @@ teamColorsDict = {
     'LSU':'#461D7C',
     'OM':'#CE1126', 
     'MS':'#660000',
-    'MIZZU':'#2C2A29', 
+    'MIZZU':'#F1B82D', 
     'SCAR':'#73000A',
     'TAMU':'#500000',
     'TENN':'#f77f00',
@@ -92,7 +92,7 @@ sec_season_stats = pd.concat(sec_season_stats).set_index('team').reset_index()
 
 
 
-app = dash.Dash(name = __name__, external_stylesheets=[dbc.themes.SUPERHERO])
+app = dash.Dash(name = __name__, external_stylesheets=[dbc.themes.SLATE])
 
 
 helpModal = dbc.Modal([
@@ -119,23 +119,23 @@ app.layout = dbc.Container(children = [
             html.Br(),
             dbc.Row(children = [
                 dbc.Col(children = [
-                    html.Label('Choose a team:')
+                    html.H5('Choose a team:')
                 ], width = 4, style = {'text-align':'right'}),
                 dbc.Col(children = [
-                    dcc.Dropdown(
+                    dbc.Select(
                         id = 'selectedTeam',
                         options = [{'label':df_viewers.hometeam[df_viewers.HOMEID == team]\
                                         .unique()[0], 
                                     'value':team} for team in sec_teams],
                         value = 'TENN',
-                        style = {'color':'black'}
+                        style = {'font-size':20}
                     )
                 ], width = 8)
             ])
         ], width = 4),
         dbc.Col(children = [
             html.Br(),
-            dbc.Button("Help", id="openHelpModal", outline = True, 
+            dbc.Button("Help", id="openHelpModal",
                        className="ml-auto", color = 'info')
         ], width = 3, style = {'text-align':'right'}),
         dbc.Col(children = [
@@ -157,28 +157,46 @@ app.layout = dbc.Container(children = [
 
     dbc.Row(children = [
         dbc.Col(children = [
-            dbc.Col(children = [
+            html.Div(children = [
                 dbc.Tabs(children = [
                     dbc.Tab(label = 'Rank', tab_id = 'rank-tab', children = [
-                        
+                        dbc.Col(children = [
+                            html.H2('Test')
+                        ], width = 12)
                     ]),
                     dbc.Tab(label = "Weather", tab_id = "weather-tab", children = [
-                        html.H1("Test")
+                        dbc.Col(children = [
+
+                        ], width = 12)
                     ]), # weather, temperature, time of day
                     dbc.Tab(label = "Network", tab_id = "network-tab", children = [
-                        
+                        dbc.Col(children = [
+
+                        ], width = 12)
                     ]),
                     dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
-                        
+                        dbc.Col(children = [
+
+                        ], width = 12)
                     ])
-                ], id = 'tabs', active_tab = 'tab-1')    
-            ], width = {'size':12})
+                ], id = 'tabs', active_tab = 'network-tab')      
+            ], style = {'height':600}),
+            dbc.RadioItems(
+                id = 'selectedMetric',
+                options = [
+                    {'label':'Viewers', 'value':'viewers'},
+                    {'label':'Attendance', 'value':'attend'},
+                    {'label':'Ratings', 'value':'ratings'}
+                ],
+                value = 'viewers',
+                inline = True
+            )
         ], width = 7),
         
         dbc.Col(children = [
             dbc.Card(children = [
                 dbc.CardHeader(children = [
-                    dcc.RadioItems(
+                    dbc.RadioItems(
                         id = 'statsChoice',
                         options=[
                             {'label': 'Averages', 'value': 'avg'},
@@ -186,41 +204,34 @@ app.layout = dbc.Container(children = [
                         ],
                         value='avg',
                         inputStyle={"margin-right": "10px"},
-                        labelStyle = {'display': 'inline-block', 'margin-left':'10px'}
+                        inline = True
                     )  
                 ]),
                 dbc.CardBody(children = [
                     dbc.Row(children = [
                         dbc.Col(children = [
+                            html.H5('Viewers'),
                             daq.Gauge(
                                 id='viewersGauge',
-                                label = 'Viewers',
-                                size=150,
-                                style = {'color':'black'}
-                            )
-                        ], width = 4),
-                        dbc.Col(children = [
+                                size=125,
+                                style = {'color':'black'},
+                                color = {'default':'white'}),
+                            html.H5('Attendance'),
                             daq.Gauge(
                                 id='attendanceGauge',
-                                label = 'Attendance',
-                                size=150,
-                                style = {'color':'black'}
-                            )
-                        ], width = 4),
-                        dbc.Col(children = [
+                                size=125,
+                                style = {'color':'black'}),
+                            html.H5('Ratings'),
                             daq.Gauge(
                                 id='ratingsGauge',
-                                label = 'Ratings',
-                                size=150,
-                                style = {'color':'black'}
-                            )
-                        ], width = 4)
-                    ]),
-                    dbc.Row(children = [
+                                size=125,
+                                style = {'color':'black'})
+                        ], width = 3),
                         dbc.Col(children = [
-                            dcc.Graph(id = 'teamStatsPlots')
-                        ], width = 12)
-                    ])
+                            dcc.Graph(id = 'teamStatsPlots',
+                                      style = {'height':550})
+                        ], width = 9)
+                    ]),
                 ])
                 
             ], color = 'light')
@@ -270,22 +281,29 @@ def create_right_plots(selectedTeam, statsChoice):
         .sort_values('season')
     ts_fig = make_subplots(rows = 3, cols = 1,
                            shared_xaxes=True,
-                           vertical_spacing=0.05,
-                           subplot_titles=("Viewership", "Attendance", "Ratings"))
+                           vertical_spacing=0.1
+#                            subplot_titles=("Viewership", "Attendance", "Ratings")
+                          )
     
     ts_fig.add_trace(
         go.Scatter(x=team_season_stats.season, y=team_season_stats[viewer_col],
-                   line = {'width':5, 'color':teamColor}), 
+                   mode = 'lines+markers',
+                   marker = {'size':10},
+                   line = {'width':5, 'color':teamColor}, name = 'Viewers'), 
         row=1, col=1)
 
     ts_fig.add_trace(
         go.Scatter(x=team_season_stats.season, y=team_season_stats[attend_col],
-                   line = {'width':5, 'color':teamColor}), 
+                   mode = 'lines+markers',
+                   marker = {'size':10},
+                   line = {'width':5, 'color':teamColor}, name = 'Attendance'), 
         row=2, col=1)
     
     ts_fig.add_trace(
         go.Scatter(x=team_season_stats.season, y=team_season_stats[rating_col],
-                   line = {'width':5, 'color':teamColor}), 
+                   mode = 'lines+markers',
+                   marker = {'size':10},
+                   line = {'width':5, 'color':teamColor}, name = 'Ratings'), 
         row=3, col=1)
     
     ts_fig.update_layout(
@@ -295,10 +313,10 @@ def create_right_plots(selectedTeam, statsChoice):
         plot_bgcolor = 'rgba(0,0,0,0)',
         xaxis1 = {'showgrid': False},
         xaxis2 = {'showgrid': False},
-        xaxis3 = {'showgrid': False},
-        yaxis1 = {'gridcolor':'gray'},
-        yaxis2 = {'gridcolor':'gray'},
-        yaxis3 = {'gridcolor':'gray'}
+        xaxis3 = {'showgrid': False, 'color':'gray'},
+        yaxis1 = {'gridcolor':'gray', 'color':'gray'},
+        yaxis2 = {'gridcolor':'gray', 'color':'gray'},
+        yaxis3 = {'gridcolor':'gray', 'color':'gray'}
     )
     
     
