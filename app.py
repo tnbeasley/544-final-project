@@ -357,7 +357,17 @@ def create_network_plots(selectedTeam, selectedMetric):
     bar = go.Bar(x = avgMetric.network, y = avgMetric[selectedMetric])
     fig = go.Figure(data = bar)
     fig.update_traces(marker = {'color':teamColorsDict[selectedTeam]})
-    fig.update_layout(title = f'Avg. {selectedMetric.title()} for {selectedTeam} by Network')
+    fig.update_layout(
+        margin = {'l':10, 'r':10, 't':40, 'b':5},
+        title = {
+            'text':f'Avg. {selectedMetric.title()} for {selectedTeam} by Network',
+            'font':{'color':'white'}
+        },
+        xaxis = {'color':'white'},
+        yaxis = {'color':'white'},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'lightgray'
+    )
     
     return fig
 
