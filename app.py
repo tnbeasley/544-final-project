@@ -11,6 +11,8 @@ import numpy as np
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
+import Weather
+
 teamColorsDict = {
     'UA':'#A60C31', 
     'AR':'#9D2235', 
@@ -89,9 +91,6 @@ for team in sec_teams:
 sec_season_stats = pd.concat(sec_season_stats).set_index('team').reset_index()
 
 
-
-
-
 app = dash.Dash(name = __name__, external_stylesheets=[dbc.themes.SLATE])
 
 
@@ -166,9 +165,10 @@ app.layout = dbc.Container(children = [
                     ]),
                     dbc.Tab(label = "Weather", tab_id = "weather-tab", children = [
                         dbc.Col(children = [
-
+                            dcc.Graph(id = 'start_time'),
+                            dcc.Graph(id = 'temp_chart')
                         ], width = 12)
-                    ]), # weather, temperature, time of day
+                    ]), 
                     dbc.Tab(label = "Network", tab_id = "network-tab", children = [
                         dbc.Col(children = [
                             dcc.Graph(id = 'networkMetrics', style = {'height':550})
@@ -369,6 +369,28 @@ def create_network_plots(selectedTeam, selectedMetric):
         plot_bgcolor = 'lightgray'
     )
     
+    return fig
+
+@app.callback(
+    Output('start_time', 'figure'),
+    [Input('selectedTeam', 'value'),
+     Input('selectedMetric', 'value')]
+)
+
+def update_weather(team, metric):
+    if team:
+        fig = Weather.start_time_chart(df, team, metric)
+    return fig
+
+@app.callback(
+    Output('temp_chart', 'figure'),
+    [Input('selectedTeam', 'value'),
+     Input('selectedMetric', 'value')]
+)
+
+def update_weather(team, metric):
+    if team:
+        fig = Weather.temp_chart(df, team, metric)
     return fig
 
 

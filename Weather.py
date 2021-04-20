@@ -1,5 +1,7 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
 import numpy as np
 
 teamColorsDict = {
@@ -18,22 +20,18 @@ teamColorsDict = {
     'TENN':'#f77f00',
     'VANDY':'#A8996E'
 }
+    
 
-def weather_charts(df, team, metric):
-    """Makes plots for weather tab of app"""
+def start_time_chart(df, team, metric):
+    teamColor = teamColorsDict[team]
     
-    # skeleton of graph
-    fig, (ax1, ax2) = plt.subplots(2,1, figsize=(10,10))
-    
-     # redefine labelS
+     # redefine labels
     if metric == 'attend':
         labeler = 'Attendance'
     if metric == 'viewers':
         labeler = 'Viewership'
     if metric == 'rating':
         labeler = 'Rating'
-    
-    ##################### Start Time Graph
     
      # get team of interest
     df_team = df[(df['hometeamid']==team) & (df['clean_start']!='Unknown')]
@@ -49,37 +47,58 @@ def weather_charts(df, team, metric):
     for time in times_sort:
         games = df_team[df_team['clean_start']==time]
         avg = np.mean(games[metric])
-        metrics.append(avg)
-        
-    # generate plot
-    ax1.bar(times_sort, metrics, width = 0.35, color = teamColorsDict[team])
-    ax1.set_title('Average '+labeler+' by Start Time')
-    ax1.set_xticks(times_sort)
-    ax1.set_ylabel(labeler)
-    ax1.set_xlabel("Game Start Time")
-    ax1.set_xticklabels(times_sort)
-    
-   ##################### Temperature Graph
+        metrics.append(
+            dict(
+                times_sort=time,
+                metrics=avg,
+                color=teamColor
+                )
+        )
 
-    # get team of interest
-    df_team = df[(df['hometeamid']==team) & (df['cleaned_temp']!=0)]
+    df_time = pd.DataFrame.from_dict(metrics)
+    
+    fig = px.bar(
+        df_time, 
+        x='times_sort', 
+        y='metrics',
+        color='color',
+        title="Average " + labeler + " by Start Time",
+        labels={
+            'times_sort': 'Game Start Time',
+            'metrics': labeler
+        }
+    )
         
-    # generate plot
-    lineStart = df_team[metric].min()
-    lineEnd = df_team[metric].max()
-    lowtemp = df_team['cleaned_temp'].min()
-    hitemp = df_team['cleaned_temp'].max()
-    
-    ax2.scatter(df_team['cleaned_temp'], df_team[metric], c=pd.to_datetime(df_team['DATE']))
-    ax2.set_title('Average ' + labeler + ' by Temperature')
-    ax2.set_ylabel(labeler)
-    ax2.set_xlabel("Temperature (F)")
-    ax2.plot([lowtemp, hitemp], [lineStart, lineEnd], 'k-', color = 'b')
-    
-    # return plot
-    fig.tight_layout()
+        
     return(fig)
-    # plt.show()
+
+
+def temp_chart(df, team, metric):
+    # redefine labels
+    if metric == 'attend':
+        labeler = 'Attendance'
+    if metric == 'viewers':
+        labeler = 'Viewership'
+    if metric == 'rating':
+        labeler = 'Rating'
+    
+     # get team of interest
+    df_team = df[(df['hometeamid']==team) & (df['cleaned_temp']!=0)]
+
+    # generate plots
+    fig = px.scatter(
+            df_team,
+            x='cleaned_temp', 
+            y=metric,
+            title=labeler + " by Temperature",
+            labels={
+                'cleaned_temp': 'Temperature (F)',
+                metric: labeler
+            }
+    )
+    
+    return(fig)
+    
 
 
 
