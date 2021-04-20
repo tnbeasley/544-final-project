@@ -171,7 +171,7 @@ app.layout = dbc.Container(children = [
                     ]), # weather, temperature, time of day
                     dbc.Tab(label = "Network", tab_id = "network-tab", children = [
                         dbc.Col(children = [
-
+                            dcc.Graph(id = 'networkMetrics', style = {'height':550})
                         ], width = 12)
                     ]),
                     dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
@@ -186,7 +186,7 @@ app.layout = dbc.Container(children = [
                 options = [
                     {'label':'Viewers', 'value':'viewers'},
                     {'label':'Attendance', 'value':'attend'},
-                    {'label':'Ratings', 'value':'ratings'}
+                    {'label':'Ratings', 'value':'rating'}
                 ],
                 value = 'viewers',
                 inline = True
@@ -249,7 +249,6 @@ def toggle_help_modal(n1, n2, is_open):
     if n1 or n2:
         return not is_open
     return is_open
-
 
 
 @app.callback(
@@ -340,6 +339,37 @@ def create_right_plots(selectedTeam, statsChoice):
            team_viewer_stats[viewer_col].values[0], min_views, max_views, teamColor,
            team_attend_stats[attend_col].values[0], min_attend, max_attend, teamColor,
            team_rating_stats[rating_col].values[0], min_rating, max_rating, teamColor)
+
+
+@app.callback(
+    Output('networkMetrics', 'figure'),
+    [Input('selectedTeam', 'value'),
+     Input('selectedMetric', 'value')]
+)
+def create_network_plots(selectedTeam, selectedMetric):
+    team_df = df.loc[(df.HOMEID == selectedTeam) | (df.visid == selectedTeam)]
+    team_df = team_df[(team_df[selectedMetric].isna() == False) & 
+                      (team_df.network.isna() == False)]
+    avgMetric = team_df.groupby('network')[selectedMetric]\
+        .mean().to_frame().reset_index()\
+        .sort_values(selectedMetric, ascending = False)
+    
+    bar = go.Bar(x = avgMetric.network, y = avgMetric[selectedMetric])
+    fig = go.Figure(data = bar)
+    fig.update_traces(marker = {'color':teamColorsDict[selectedTeam]})
+    fig.update_layout(
+        margin = {'l':10, 'r':10, 't':40, 'b':5},
+        title = {
+            'text':f'Avg. {selectedMetric.title()} for {selectedTeam} by Network',
+            'font':{'color':'white'}
+        },
+        xaxis = {'color':'white'},
+        yaxis = {'color':'white'},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'lightgray'
+    )
+    
+    return fig
 
 
 if __name__ == '__main__':
