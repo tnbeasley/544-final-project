@@ -61,7 +61,7 @@ def start_time_chart(df, team, metric):
         df_time, 
         x='times_sort', 
         y='metrics',
-        color='color',
+        # color='color',
         title="Average " + labeler + " by Start Time",
         labels={
             'times_sort': 'Game Start Time',
@@ -69,11 +69,13 @@ def start_time_chart(df, team, metric):
         }
     )
         
-        
+    fig.update_traces(marker=dict(color=teamColor))  
     return(fig)
 
 
 def temp_chart(df, team, metric):
+    teamColor = teamColorsDict[team]
+    
     # redefine labels
     if metric == 'attend':
         labeler = 'Attendance'
@@ -97,6 +99,7 @@ def temp_chart(df, team, metric):
             }
     )
     
+    fig.update_traces(marker=dict(color=teamColor)) 
     return(fig)
     
 
