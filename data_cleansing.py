@@ -5,12 +5,12 @@ import numpy as np
 
 
 # read in data
-ratings = pd.read_csv("TV_Ratings_onesheet.csv")
+ratings = pd.read_csv('544-final-project-main/TV_Ratings_onesheet.csv')
 ratings.columns = ratings.columns.str.replace(' ', '').str.lower()
 ratings_key_cols = ['hometeamid', 'date']
 ratings['date'] = pd.to_datetime(ratings.date)
 
-games = pd.read_csv("games_flat_xml_2012-2018.csv")
+games = pd.read_csv("544-final-project-main/games_flat_xml_2012-2018.csv")
 games.columns = games.columns.str.replace(' ', '').str.lower()
 game_key_cols = ['homeid', 'date']
 games['date'] = pd.to_datetime(games.date)
@@ -113,75 +113,11 @@ df = df.rename({'date':'DATE'}, axis='columns')
 df['HOMEID'] = df[ratings_key_cols[0]].combine_first(df[game_key_cols[0]])
 
 df.drop([ratings_key_cols[0]] + [game_key_cols[0]], axis = 1)
+############Carly
+df['year'] = df['DATE'].dt.year
+#############
 df = df.set_index(['DATE', 'HOMEID'])
 
-# clean temp column
-import numpy as np
-
-cleaned_temp = []
-temps = list(df['temp'].fillna(0))
-
-for row in temps:
-    if isinstance(row, str):
-        lister = row.split(" ")
-        if lister[0].isdigit():
-            cleaned_temp.append(int(lister[0]))
-        else:
-            cleaned_temp.append(None)
-    elif isinstance(row, float):
-        cleaned_temp.append(int(row))
-    elif isinstance(row, int):
-        cleaned_temp.append(row)
-    else:
-        print(row)
-
-df['cleaned_temp'] = cleaned_temp
+df.to_csv('544-final-project-main/clean_data.csv')
 
 
-# clean start time column
-cleaned_start = []
-starts = df['start_time'].fillna("Unknown")
-cleaned_start = []
-
-for row in starts:
-    if isinstance(row, str):
-        if (row[0] == '9'):
-            if 'A' in row or 'a' in row:
-                cleaned_start.append('9:00-9:59 AM')
-            else:
-                cleaned_start.append('9:00-9:59 PM')
-        elif (row[0:1] == '10') and ('AM' in row or 'a' in row):
-            cleaned_start.append('10:00-10:59 AM')
-        elif (row[0:1] == '11') and ('AM' in row or 'a' in row):
-            cleaned_start.append('11:00-11:59 AM')
-        elif (row[0:1] == '12') and ('PM' in row or 'p' in row):
-            cleaned_start.append('12:00-12:59 AM')
-        elif (row[0] == '1') and ('PM' in row or 'p' in row):
-            cleaned_start.append('1:00-1:59 PM')
-        elif (row[0] == '2') and ('PM' in row or 'p' in row):
-            cleaned_start.append('2:00-2:59 PM')
-        elif (row[0] == '3') and ('PM' in row or 'p' in row):
-            cleaned_start.append('3:00-3:59 PM')
-        elif (row[0] == '4') and ('PM' in row or 'p' in row):
-            cleaned_start.append('4:00-4:59 PM')
-        elif (row[0] == '5') and ('PM' in row or 'p' in row):
-            cleaned_start.append('5:00-5:59 PM')
-        elif (row[0] == '6') and ('PM' in row or 'p' in row):
-            cleaned_start.append('6:00-6:59 PM')
-        elif (row[0] == '7') and ('PM' in row or 'p' in row):
-            cleaned_start.append('7:00-7:59 PM')
-        elif (row[0] == '8') and ('PM' in row or 'p' in row):
-            cleaned_start.append('8:00-8:59 PM')
-        elif row == 'Noon':
-                cleaned_start.append('12:00-12:59 AM')
-        else:
-            cleaned_start.append("Unknown")
-    else:
-        cleaned_start.append("Unknown")
-            
-df['clean_start'] = cleaned_start
-
-
-
-
-df.to_csv('clean_data.csv')
