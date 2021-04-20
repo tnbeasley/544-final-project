@@ -62,14 +62,24 @@ def start_time_chart(df, team, metric):
         x='times_sort', 
         y='metrics',
         # color='color',
-        title="Average " + labeler + " by Start Time",
+        #title="Average " + labeler + " by Start Time",
         labels={
             'times_sort': 'Game Start Time',
             'metrics': labeler
         }
     )
         
-    fig.update_traces(marker=dict(color=teamColor))  
+    fig.update_traces(marker=dict(color=teamColor))
+    fig.update_layout(
+        margin = {'l':10, 'r':10, 't':40, 'b':5},
+        title = {
+            'text':"Average " + labeler + " by Start Time",
+            'font':{'color':'white'}
+        },
+        xaxis = {'color':'white'},
+        yaxis = {'color':'white'},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'lightgray')
     return(fig)
 
 
@@ -92,14 +102,24 @@ def temp_chart(df, team, metric):
             df_team,
             x='cleaned_temp', 
             y=metric,
-            title=labeler + " by Temperature",
+            # title=labeler + " by Temperature",
             labels={
                 'cleaned_temp': 'Temperature (F)',
                 metric: labeler
             }
     )
     
-    fig.update_traces(marker=dict(color=teamColor)) 
+    fig.update_traces(marker=dict(color=teamColor))
+    fig.update_layout(
+        margin = {'l':10, 'r':10, 't':40, 'b':5},
+        title = {
+            'text':labeler + " by Temperature",
+            'font':{'color':'white'}
+        },
+        xaxis = {'color':'white'},
+        yaxis = {'color':'white'},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'lightgray')
     return(fig)
     
 
