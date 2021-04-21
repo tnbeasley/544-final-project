@@ -315,8 +315,10 @@ def update_match_graph(selected_team2, selected_team1):
         match_graph = matchup_df.loc[(matchup_df.hometeamid == selected_team2) | (matchup_df.visteamid == selected_team2)] # Gives us all matchups between Team1 and team2
         fig = px.bar(
             match_graph,
-            x = range(match_graph.shape[0]), # This gets our x for number games. 
-            y = 'viewers') #Okay, the dropnas might bork things but we shall see.
+            x = range(1 , (match_graph.shape[0]+1)), # This gets our x for number games. 
+            y = 'viewers',
+            labels = {'x': 'Games Against Eachother', 'y': 'Viewers'})
+        fig.update_traces(marker_color = teamColorsDict[selected_team1])
         return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
 @app.callback(
