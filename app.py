@@ -10,6 +10,7 @@ import numpy as np
 
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
+import plotly.express as px
 
 import Weather
 
@@ -35,6 +36,9 @@ teams = np.unique(df[['visteamid', 'hometeamid']].dropna().values.ravel())
 sec_teams = ['UA', 'AR', 'AU', 'UF', 'UGA', 'UK', 'LSU', 
              'MIZZU', 'MS', 'OM', 'SCAR','TAMU',
              'TENN', 'VANDY']
+
+selectyear = df.loc[df.season.isna() == False].season.unique()
+selectyeareDict = [{'label' : x, 'value': x} for x in selectyear ]
 
 df_viewers = df[df.viewers.isna() == False]
 df_attend = df[df.attend.isna() == False]
@@ -159,15 +163,21 @@ app.layout = dbc.Container(children = [
             html.Div(children = [
                 dbc.Tabs(children = [
                     dbc.Tab(label = 'Rank', tab_id = 'rank-tab', children = [
-                        dbc.Col(children = [
-                            html.H2('Test')
-                        ], width = 12)
+                        dbc.Col(children = [ 
+                             dcc.Graph(id = 'rankmetrics', style = {'height':500}),
+                             html.H6('Rank Different =  Visit Weighted rank - Home Weighted Rank'),
+                             dcc.Dropdown(
+                                     id = 'selectedyear',
+                                     options = selectyeareDict)
+                         ], width = 10)
                     ]),
                     dbc.Tab(label = "Weather", tab_id = "weather-tab", children = [
-                        dbc.Col(children = [
-                            dcc.Graph(id = 'start_time'),
-                            dcc.Graph(id = 'temp_chart')
-                        ], width = 12)
+                        html.Div(children = [
+                            dbc.Col(children = [
+                                dcc.Graph(id = 'start_time'),
+                                dcc.Graph(id = 'temp_chart')
+                            ], width = 12)
+                        ], style = {'height':550})
                     ]), 
                     dbc.Tab(label = "Network", tab_id = "network-tab", children = [
                         dbc.Col(children = [
@@ -391,6 +401,75 @@ def update_weather(team, metric):
 def update_weather(team, metric):
     if team:
         fig = Weather.temp_chart(df, team, metric)
+    return fig
+
+
+@app.callback(
+     Output('rankmetrics','figure'),
+     [Input('selectedTeam','value'),
+      Input('selectedyear','value')]
+     
+)
+def create_rank_plot (selectedTeam, selectedyear):
+    team_df = df.loc[df.HOMEID == selectedTeam]
+    team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
+                      (team_df.visitorweightedrank.isna() == False)]
+
+    team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank'] 
+    if selectedyear is None:
+        team_df = df.loc[df.HOMEID == selectedTeam]
+        team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
+                          (team_df.visitorweightedrank.isna() == False)]
+
+        team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank'] 
+
+
+    else:
+        team_df = df.loc[df.HOMEID == selectedTeam]
+        team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
+                          (team_df.visitorweightedrank.isna() == False)]
+
+        team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank']   
+        team_df = team_df[team_df.season == selectedyear]
+
+
+    hist = px.histogram(team_df,y= 'matchup_full_teamnames',x='rank_diff')
+
+
+    fig = go.Figure(data = hist)
+    fig.update_traces(marker = {'color':teamColorsDict[selectedTeam]})
+    fig.update_traces(hovertemplate='Home Weighted Rank: %{text}'+
+                       '<br> Rank Different: %{x}'
+                       '<br> Team: %{y}', 
+                       text= [i for i in team_df.homeweightedrank],
+    #                  visit = [i for i in team_df.visitorweightedrank],
+                       showlegend = False
+                       )
+    fig.update_traces(hovertemplate=None, selector={'name':'Europe'})
+    fig.update_layout(
+         margin = {'l':10, 'r':10, 't':40, 'b':5},
+         title = {
+            'text':f'Hometeam: {selectedTeam}',
+             'font':{'color':'white'}
+         },
+         xaxis = {'color':'white'},
+         yaxis = {'color':'white'},
+         paper_bgcolor = 'rgba(0,0,0,0)',
+         plot_bgcolor = 'lightgray'
+    )
+
+    fig.update_layout(
+        yaxis={'title':'full name for hometeam and visit team'},
+        xaxis={'title':'Rank Difference'})
+
+    fig.update_layout(
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=16,
+            font_family="Rockwell"
+        )
+    )
+    
     return fig
 
 
