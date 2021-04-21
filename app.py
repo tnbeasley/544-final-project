@@ -185,8 +185,29 @@ app.layout = dbc.Container(children = [
                         ], width = 12)
                     ]),
                     dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
-                        dbc.Col(children = [
-
+                        dbc.Col( children = [
+                        # Hello, this is where I started to add stuff. If it breaks for you hashtag this part out!
+                        html.H2('Team of Interest:'),
+                        dcc.Dropdown(
+                            id = 'match-team1-dd',
+                            # hometeamid might need to be homeid?
+                            # team = 'TENN'
+                            # df_viewers
+                            options = [{'label': df_viewers.hometeam[df_viewers.homeid == team].unique()[0],
+                                        'value': team} for team in sec_teams],
+                            value = 'TENN',
+                            clearable = False
+                            # sec_teams
+                        ),
+                        # Ideally this one is to the right of this column.
+                        dcc.Dropdown(
+                            id = 'match-team2-dd',
+                            options = [],
+                            multi = False # maybe we want this to be true?
+                        ),
+                        dcc.Graph(
+                            id = 'figure-matchup',
+                            figure = {})
                         ], width = 12)
                     ])
                 ], id = 'tabs', active_tab = 'network-tab')      
@@ -260,6 +281,43 @@ def toggle_help_modal(n1, n2, is_open):
         return not is_open
     return is_open
 
+# This is the callback to populate our chained callback.
+# Basically the value in the first dropdown populates the values in the second drop down.
+@app.callback(
+    Output('match-team2-dd', 'options'),
+    Input('match-team1-dd', 'value')
+)
+def match_team2_set(chosen_team):
+    chosen_team = 'TENN'
+    matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | (df_viewers.visteamid == chosen_team)]
+    return [{'label': c, 'value': c} for c in np.unique(matchup_df[['hometeamid', 'visteamid']].values.ravel())]
+# .values.ravel()
+
+
+   # return [{'label': matchup_df.hometeam[matchup_df.HOMEID == chosen_team].unique()[0],
+    #                    'value': chosen_team} for chosen_team in sec_teams],
+# Wait for Tanner here.
+# Make this 
+
+# This is creating the output for the barchart for the two teams.
+@app.callback(
+    Output('figure-matchup', 'figure'),
+    Input('match-team2-dd', 'value'),
+    Input('match-team1-dd', 'value')
+)
+def update_match_graph(selected_team2, selected_team1):
+    # selected_team2 = 'FRESNO'
+    # selected_team1 = 'TENN'
+    if len(selected_team2) == 0:
+        return dash.no_update
+    else: # Might have to get rid of hometeamid for homeid
+        matchup_df = df_viewers.loc[(df_viewers.hometeamid == selected_team1) | (df_viewers.visteamid == selected_team1)] # Gives me all selected_team1 games (UT In our example)
+        match_graph = matchup_df.loc[(matchup_df.hometeamid == selected_team2) | (matchup_df.visteamid == selected_team2)] # Gives us all matchups between Team1 and team2
+        fig = px.bar(
+            match_graph,
+            x = range(match_graph.shape[0]), # This gets our x for number games. 
+            y = 'viewers') #Okay, the dropnas might bork things but we shall see.
+        return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
 @app.callback(
     [Output('teamStatsPlots', 'figure'),
