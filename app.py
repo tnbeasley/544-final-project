@@ -190,14 +190,10 @@ app.layout = dbc.Container(children = [
                         html.H2('Team of Interest:'),
                         dcc.Dropdown(
                             id = 'match-team1-dd',
-                            # hometeamid might need to be homeid?
-                            # team = 'TENN'
-                            # df_viewers
                             options = [{'label': df_viewers.hometeam[df_viewers.homeid == team].unique()[0],
                                         'value': team} for team in sec_teams],
                             value = 'TENN',
                             clearable = False
-                            # sec_teams
                         ),
                         # Ideally this one is to the right of this column.
                         dcc.Dropdown(
@@ -291,21 +287,16 @@ def match_team2_set(chosen_team):
     chosen_team = 'TENN'
     matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | (df_viewers.visteamid == chosen_team)]
     return [{'label': c, 'value': c} for c in np.unique(matchup_df[['hometeamid', 'visteamid']].values.ravel())]
-# .values.ravel()
 
-
-   # return [{'label': matchup_df.hometeam[matchup_df.HOMEID == chosen_team].unique()[0],
-    #                    'value': chosen_team} for chosen_team in sec_teams],
-# Wait for Tanner here.
-# Make this 
 
 # This is creating the output for the barchart for the two teams.
 @app.callback(
     Output('figure-matchup', 'figure'),
     Input('match-team2-dd', 'value'),
-    Input('match-team1-dd', 'value')
+    Input('match-team1-dd', 'value'),
+    Input('selectedMetric', 'value')
 )
-def update_match_graph(selected_team2, selected_team1):
+def update_match_graph(selected_team2, selected_team1, selectedMetric):
     # selected_team2 = 'FRESNO'
     # selected_team1 = 'TENN'
     if len(selected_team2) == 0:
@@ -316,8 +307,8 @@ def update_match_graph(selected_team2, selected_team1):
         fig = px.bar(
             match_graph,
             x = range(1 , (match_graph.shape[0]+1)), # This gets our x for number games. 
-            y = 'viewers',
-            labels = {'x': 'Games Against Eachother', 'y': 'Viewers'})
+            y = selectedMetric,
+            labels = {'x': 'Games Against Eachother'})
         fig.update_traces(marker_color = teamColorsDict[selected_team1])
         return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
