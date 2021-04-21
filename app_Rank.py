@@ -12,7 +12,9 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 
-import Weather
+
+
+
 
 teamColorsDict = {
     'UA':'#A60C31', 
@@ -31,15 +33,15 @@ teamColorsDict = {
     'VANDY':'#A8996E'
 }
 
-df = pd.read_csv('clean_data.csv')
+df = pd.read_csv('544-final-project-main/clean_data.csv')
 teams = np.unique(df[['visteamid', 'hometeamid']].dropna().values.ravel())
 sec_teams = ['UA', 'AR', 'AU', 'UF', 'UGA', 'UK', 'LSU', 
              'MIZZU', 'MS', 'OM', 'SCAR','TAMU',
              'TENN', 'VANDY']
-
-selectyear = df.loc[df.season.isna() == False].season.unique()
+#########Carly #################
+selectyear = df['year'].unique()
 selectyeareDict = [{'label' : x, 'value': x} for x in selectyear ]
-
+###########################
 df_viewers = df[df.viewers.isna() == False]
 df_attend = df[df.attend.isna() == False]
 df_rating = df[df.rating.isna() == False]
@@ -93,6 +95,9 @@ for team in sec_teams:
     sec_season_stats.append(team_stats)
     
 sec_season_stats = pd.concat(sec_season_stats).set_index('team').reset_index()
+
+
+
 
 
 app = dash.Dash(name = __name__, external_stylesheets=[dbc.themes.SLATE])
@@ -164,50 +169,28 @@ app.layout = dbc.Container(children = [
                 dbc.Tabs(children = [
                     dbc.Tab(label = 'Rank', tab_id = 'rank-tab', children = [
                         dbc.Col(children = [ 
-                             dcc.Graph(id = 'rankmetrics', style = {'height':500}),
-                             html.H6('Rank Different =  Visit Weighted rank - Home Weighted Rank'),
-                             dcc.Dropdown(
-                                     id = 'selectedyear',
-                                     options = selectyeareDict)
-                         ], width = 10)
+############################### Carly #######################################                            
+                            dcc.Graph(id = 'rankmetrics', style = {'height':500}),
+                            html.H6('Rank Different =  Visit Weighted rank - Home Weighted Rank'),
+                            dcc.Dropdown(
+                                    id = 'selectedyear',
+                                    options = selectyeareDict)
+                        ], width = 10)
                     ]),
+###################################################################### 
                     dbc.Tab(label = "Weather", tab_id = "weather-tab", children = [
-                        html.Div(children = [
-                            dbc.Col(children = [
-                                dcc.Graph(id = 'start_time'),
-                                dcc.Graph(id = 'temp_chart')
-                            ], width = 12)
-                        ], style = {'height':550})
-                    ]), 
+                        dbc.Col(children = [ 
+
+                        ], width = 12)
+                    ]), # weather, temperature, time of day
                     dbc.Tab(label = "Network", tab_id = "network-tab", children = [
                         dbc.Col(children = [
                             dcc.Graph(id = 'networkMetrics', style = {'height':550})
                         ], width = 12)
                     ]),
                     dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
-                        dbc.Col( children = [
-                        # Hello, this is where I started to add stuff. If it breaks for you hashtag this part out!
-                        html.H2('Team of Interest:'),
-                        dcc.Dropdown(
-                            id = 'match-team1-dd',
-                            # hometeamid might need to be homeid?
-                            # team = 'TENN'
-                            # df_viewers
-                            options = [{'label': df_viewers.hometeam[df_viewers.homeid == team].unique()[0],
-                                        'value': team} for team in sec_teams],
-                            value = 'TENN',
-                            clearable = False
-                            # sec_teams
-                        ),
-                        # Ideally this one is to the right of this column.
-                        dcc.Dropdown(
-                            id = 'match-team2-dd',
-                            options = [],
-                            multi = False # maybe we want this to be true?
-                        ),
-                        dcc.Graph(
-                            id = 'figure-matchup',
-                            figure = {})
+                        dbc.Col(children = [
+
                         ], width = 12)
                     ])
                 ], id = 'tabs', active_tab = 'network-tab')      
@@ -281,43 +264,6 @@ def toggle_help_modal(n1, n2, is_open):
         return not is_open
     return is_open
 
-# This is the callback to populate our chained callback.
-# Basically the value in the first dropdown populates the values in the second drop down.
-@app.callback(
-    Output('match-team2-dd', 'options'),
-    Input('match-team1-dd', 'value')
-)
-def match_team2_set(chosen_team):
-    chosen_team = 'TENN'
-    matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | (df_viewers.visteamid == chosen_team)]
-    return [{'label': c, 'value': c} for c in np.unique(matchup_df[['hometeamid', 'visteamid']].values.ravel())]
-# .values.ravel()
-
-
-   # return [{'label': matchup_df.hometeam[matchup_df.HOMEID == chosen_team].unique()[0],
-    #                    'value': chosen_team} for chosen_team in sec_teams],
-# Wait for Tanner here.
-# Make this 
-
-# This is creating the output for the barchart for the two teams.
-@app.callback(
-    Output('figure-matchup', 'figure'),
-    Input('match-team2-dd', 'value'),
-    Input('match-team1-dd', 'value')
-)
-def update_match_graph(selected_team2, selected_team1):
-    # selected_team2 = 'FRESNO'
-    # selected_team1 = 'TENN'
-    if len(selected_team2) == 0:
-        return dash.no_update
-    else: # Might have to get rid of hometeamid for homeid
-        matchup_df = df_viewers.loc[(df_viewers.hometeamid == selected_team1) | (df_viewers.visteamid == selected_team1)] # Gives me all selected_team1 games (UT In our example)
-        match_graph = matchup_df.loc[(matchup_df.hometeamid == selected_team2) | (matchup_df.visteamid == selected_team2)] # Gives us all matchups between Team1 and team2
-        fig = px.bar(
-            match_graph,
-            x = range(match_graph.shape[0]), # This gets our x for number games. 
-            y = 'viewers') #Okay, the dropnas might bork things but we shall see.
-        return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
 @app.callback(
     [Output('teamStatsPlots', 'figure'),
@@ -438,98 +384,78 @@ def create_network_plots(selectedTeam, selectedMetric):
     )
     
     return fig
-
+############################   Carly ########################################## 
 @app.callback(
-    Output('start_time', 'figure'),
-    [Input('selectedTeam', 'value'),
-     Input('selectedMetric', 'value')]
+    Output('rankmetrics','figure'),
+    [Input('selectedTeam','value'),
+     Input('selectedyear','value')]
+    
 )
 
-def update_weather(team, metric):
-    if team:
-        fig = Weather.start_time_chart(df, team, metric)
-    return fig
-
-@app.callback(
-    Output('temp_chart', 'figure'),
-    [Input('selectedTeam', 'value'),
-     Input('selectedMetric', 'value')]
-)
-
-def update_weather(team, metric):
-    if team:
-        fig = Weather.temp_chart(df, team, metric)
-    return fig
-
-
-@app.callback(
-     Output('rankmetrics','figure'),
-     [Input('selectedTeam','value'),
-      Input('selectedyear','value')]
-     
-)
+### rank
 def create_rank_plot (selectedTeam, selectedyear):
-    team_df = df.loc[df.HOMEID == selectedTeam]
-    team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
-                      (team_df.visitorweightedrank.isna() == False)]
 
+    
+    team_df = df.loc[df.HOMEID == selectedTeam]
+    team_df = team_df[(team_df.homeweightedrank.isna() == False) & (team_df.visitorweightedrank.isna() == False)]
+    
     team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank'] 
     if selectedyear is None:
         team_df = df.loc[df.HOMEID == selectedTeam]
-        team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
-                          (team_df.visitorweightedrank.isna() == False)]
-
+        team_df = team_df[(team_df.homeweightedrank.isna() == False) & (team_df.visitorweightedrank.isna() == False)]
+    
         team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank'] 
-
-
-    else:
+        
+        
+    else: 
         team_df = df.loc[df.HOMEID == selectedTeam]
-        team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
-                          (team_df.visitorweightedrank.isna() == False)]
-
+        team_df = team_df[(team_df.homeweightedrank.isna() == False) & (team_df.visitorweightedrank.isna() == False)]
+    
         team_df['rank_diff'] = team_df['visitorweightedrank'] - team_df['homeweightedrank']   
-        team_df = team_df[team_df.season == selectedyear]
-
-
+        team_df = team_df[team_df.year == selectedyear]
+    
+    
     hist = px.histogram(team_df,y= 'matchup_full_teamnames',x='rank_diff')
 
-
+   
     fig = go.Figure(data = hist)
     fig.update_traces(marker = {'color':teamColorsDict[selectedTeam]})
     fig.update_traces(hovertemplate='Home Weighted Rank: %{text}'+
-                       '<br> Rank Different: %{x}'
-                       '<br> Team: %{y}', 
-                       text= [i for i in team_df.homeweightedrank],
+                      '<br> Rank Different: %{x}'
+                      '<br> Team: %{y}', 
+                      text= [i for i in team_df.homeweightedrank],
     #                  visit = [i for i in team_df.visitorweightedrank],
-                       showlegend = False
-                       )
+                      showlegend = False
+                      )
     fig.update_traces(hovertemplate=None, selector={'name':'Europe'})
     fig.update_layout(
-         margin = {'l':10, 'r':10, 't':40, 'b':5},
-         title = {
-            'text':f'Hometeam: {selectedTeam}',
-             'font':{'color':'white'}
-         },
-         xaxis = {'color':'white'},
-         yaxis = {'color':'white'},
-         paper_bgcolor = 'rgba(0,0,0,0)',
-         plot_bgcolor = 'lightgray'
-    )
-
-    fig.update_layout(
-        yaxis={'title':'full name for hometeam and visit team'},
-        xaxis={'title':'Rank Difference'})
-
-    fig.update_layout(
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=16,
-            font_family="Rockwell"
-        )
+        margin = {'l':10, 'r':10, 't':40, 'b':5},
+        title = {
+           'text':f'Hometeam: {selectedTeam}',
+            'font':{'color':'white'}
+        },
+        xaxis = {'color':'white'},
+        yaxis = {'color':'white'},
+        paper_bgcolor = 'rgba(0,0,0,0)',
+        plot_bgcolor = 'lightgray'
     )
     
+    fig.update_layout(
+    yaxis={
+        'title':'full name for hometeam and visit team'},
+    xaxis={'title':'Rank Difference'})
+    
+    fig.update_layout(
+    hoverlabel=dict(
+        bgcolor="white",
+        font_size=16,
+        font_family="Rockwell"
+    )
+)
     return fig
-
-
+###################################################################### 
 if __name__ == '__main__':
     app.run_server(debug = True)
+    
+    
+    
