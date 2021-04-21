@@ -82,6 +82,7 @@ def start_time_chart(df, team, metric):
         plot_bgcolor = 'lightgray',
         height = 275)
 
+
     return(fig)
 
 
