@@ -104,11 +104,12 @@ def temp_chart(df, team, metric):
             df_team,
             x='cleaned_temp',
             y=metric,
+            hover_data=['hometeam', 'visitorteam', 'DATE'],
             # title=labeler + " by Temperature",
             labels={
                 'cleaned_temp': 'Temperature (F)',
                 metric: labeler
-            }
+            },
     )
 
     fig.update_traces(marker=dict(color=teamColor))
@@ -123,5 +124,5 @@ def temp_chart(df, team, metric):
         paper_bgcolor = 'rgba(0,0,0,0)',
         plot_bgcolor = 'lightgray',
         height = 275)
-
+        
     return(fig)
