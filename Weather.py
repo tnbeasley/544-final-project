@@ -79,7 +79,9 @@ def start_time_chart(df, team, metric):
         xaxis = {'color':'white'},
         yaxis = {'color':'white'},
         paper_bgcolor = 'rgba(0,0,0,0)',
-        plot_bgcolor = 'lightgray')
+        plot_bgcolor = 'lightgray',
+        height = 275)
+
 
     return(fig)
 
@@ -120,6 +122,7 @@ def temp_chart(df, team, metric):
         xaxis = {'color':'white'},
         yaxis = {'color':'white'},
         paper_bgcolor = 'rgba(0,0,0,0)',
-        plot_bgcolor = 'lightgray')
-        
+        plot_bgcolor = 'lightgray',
+        height = 275)
+
     return(fig)
