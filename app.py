@@ -186,20 +186,11 @@ app.layout = dbc.Container(children = [
                     ]),
                     dbc.Tab(label = "Matchup", tab_id = "matchup-tab", children = [
                         dbc.Col( children = [
-                        # Hello, this is where I started to add stuff. If it breaks for you hashtag this part out!
-                        html.H2('Team of Interest:'),
-                        dcc.Dropdown(
-                            id = 'match-team1-dd',
-                            options = [{'label': df_viewers.hometeam[df_viewers.homeid == team].unique()[0],
-                                        'value': team} for team in sec_teams],
-                            value = 'TENN',
-                            clearable = False
-                        ),
-                        # Ideally this one is to the right of this column.
+                        html.H2('Select Team for Matchup:'),
                         dcc.Dropdown(
                             id = 'match-team2-dd',
                             options = [],
-                            multi = False # maybe we want this to be true?
+                            multi = False
                         ),
                         dcc.Graph(
                             id = 'figure-matchup',
@@ -281,19 +272,27 @@ def toggle_help_modal(n1, n2, is_open):
 # Basically the value in the first dropdown populates the values in the second drop down.
 @app.callback(
     Output('match-team2-dd', 'options'),
-    Input('match-team1-dd', 'value')
+    Input('selectedTeam', 'value')
 )
 def match_team2_set(chosen_team):
     chosen_team = 'TENN'
-    matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | (df_viewers.visteamid == chosen_team)]
-    return [{'label': c, 'value': c} for c in np.unique(matchup_df[['hometeamid', 'visteamid']].values.ravel())]
-
-
+    matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | (df_viewers.visteamid == chosen_team)].reset_index()
+    matchup_teams = pd.DataFrame(columns = ['id', 'name'])
+    for i in range(len(matchup_df)):
+        if( matchup_df.loc[i, 'hometeamid'] == chosen_team):
+            matchup_teams.loc[i, 'id'] = matchup_df.loc[i, 'visteamid']
+            matchup_teams.loc[i, 'name'] = matchup_df.loc[i, 'visitorteam']
+        else: 
+            matchup_teams.loc[i,'id'] = matchup_df.loc[i, 'hometeamid']
+            matchup_teams.loc[i, 'name'] = matchup_df.loc[i, 'hometeam']
+    matchup_teams = matchup_teams.drop_duplicates() #25 unique teams in this scenario
+    return [{'label' : row['name'], 'value' : row['id']} for index, row in matchup_teams.iterrows() ]
+    
 # This is creating the output for the barchart for the two teams.
 @app.callback(
     Output('figure-matchup', 'figure'),
     Input('match-team2-dd', 'value'),
-    Input('match-team1-dd', 'value'),
+    Input('selectedTeam', 'value'),
     Input('selectedMetric', 'value')
 )
 def update_match_graph(selected_team2, selected_team1, selectedMetric):
@@ -310,6 +309,13 @@ def update_match_graph(selected_team2, selected_team1, selectedMetric):
             y = selectedMetric,
             labels = {'x': 'Games Against Eachother'})
         fig.update_traces(marker_color = teamColorsDict[selected_team1])
+        fig.update_layout(
+            margin = {'l':10, 'r':10, 't': 40, 'b':5},
+            xaxis = {'color': 'white'},
+            yaxis = {'color': 'white'},
+            paper_bgcolor = 'rgba(0,0,0,0)',
+            plot_bgcolor = 'lightgray'
+        )
         return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
 @app.callback(
