@@ -4,22 +4,9 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import numpy as np
 
-teamColorsDict = {
-    'UA':'#A60C31',
-    'AR':'#9D2235',
-    'AU':'#0C2340',
-    'UF':'#003087',
-    'UGA':'#BA0C2F',
-    'UK':'#0033A0',
-    'LSU':'#461D7C',
-    'OM':'#CE1126',
-    'MS':'#660000',
-    'MIZZU':'#2C2A29',
-    'SCAR':'#73000A',
-    'TAMU':'#500000',
-    'TENN':'#f77f00',
-    'VANDY':'#A8996E'
-}
+from team_colors import team_colors
+teamColorsDict = team_colors()
+
 
 
 def start_time_chart(df, team, metric):
