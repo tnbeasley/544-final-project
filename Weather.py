@@ -5,7 +5,7 @@ from plotly.subplots import make_subplots
 import numpy as np
 
 from teams import team_colors
-teamColorsDict = team_colors()
+teamColorsDict = import_team_colors()
 
 
 
