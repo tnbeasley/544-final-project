@@ -12,87 +12,32 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 import plotly.express as px
 
+from teams import import_team_colors, import_sec_teams
+from data import import_data, remove_null_columns, calc_team_sum_stats, calc_sec_season_stats
+
 import Weather
 
-teamColorsDict = {
-    'UA':'#A60C31', 
-    'AR':'#9D2235', 
-    'AU':'#0C2340',
-    'UF':'#003087', 
-    'UGA':'#BA0C2F', 
-    'UK':'#0033A0',
-    'LSU':'#461D7C',
-    'OM':'#CE1126', 
-    'MS':'#660000',
-    'MIZZU':'#F1B82D', 
-    'SCAR':'#73000A',
-    'TAMU':'#500000',
-    'TENN':'#f77f00',
-    'VANDY':'#A8996E'
-}
 
-df = pd.read_csv('clean_data.csv')
+teamColorsDict = import_team_colors()
+
+df = import_data()
+df_viewers, df_attend, df_rating = remove_null_columns(df)
+
+sec_teams = import_sec_teams()
+team_sum_stats, sec_sum_stats = calc_team_sum_stats(df, df_viewers, df_attend, df_rating, sec_teams)
+
 teams = np.unique(df[['visteamid', 'hometeamid']].dropna().values.ravel())
-sec_teams = ['UA', 'AR', 'AU', 'UF', 'UGA', 'UK', 'LSU', 
-             'MIZZU', 'MS', 'OM', 'SCAR','TAMU',
-             'TENN', 'VANDY']
+
+sec_season_stats = calc_sec_season_stats(df_viewers, df_attend, df_rating, 
+                                         team_sum_stats, sec_teams)
+
+
 
 selectyear = df.loc[df.season.isna() == False].season.unique()
-selectyeareDict = [{'label' : x, 'value': x} for x in selectyear ]
+selectyeareDict = [{'label' : x, 'value': x} for x in selectyear]
 
-df_viewers = df[df.viewers.isna() == False]
-df_attend = df[df.attend.isna() == False]
-df_rating = df[df.rating.isna() == False]
 
-team_sum_stats = [{
-    'Team':team, 
-    'AvgViewers':df_viewers.loc[(df_viewers.hometeamid==team) |\
-                                (df_viewers.visteamid==team)].viewers.mean(),
-    'MedViewers':df_viewers.loc[(df_viewers.hometeamid==team) |\
-                                (df_viewers.visteamid==team)].viewers.median(),
-    'AvgAttend':df_attend.loc[(df_attend.hometeamid==team) |\
-                              (df_attend.visteamid==team)]\
-        .attend.mean(),
-    'MedAttend':df_attend.loc[(df_attend.hometeamid==team) |\
-                              (df_attend.visteamid==team)]\
-        .attend.median(),
-    'AvgRating':df_rating.loc[(df_rating.hometeamid==team) |\
-                              (df_rating.visteamid==team)].rating.mean(),
-    'MedRating':df_rating.loc[(df_rating.hometeamid==team) |\
-                              (df_rating.visteamid==team)].rating.median()
-} for team in teams]
-team_sum_stats = pd.DataFrame(team_sum_stats)
-sec_sum_stats = team_sum_stats[team_sum_stats.Team.isin(sec_teams)]
 
-sec_season_stats = []
-for team in sec_teams:
-    team_viewers = df_viewers.loc[((df_viewers.hometeamid==team) |\
-                                  (df_viewers.visteamid==team))]\
-        .groupby('season')['viewers'].agg(['mean', 'median'])\
-        .rename({'mean':'AvgViewers', 'median':'MedViewers'}, axis = 'columns')\
-        .reset_index()
-    
-    team_attend = df_attend.loc[((df_attend.hometeamid==team) |\
-                                  (df_attend.visteamid==team))]\
-        .groupby('season')['attend'].agg(['mean', 'median'])\
-        .rename({'mean':'AvgAttend', 'median':'MedAttend'}, axis = 'columns')\
-        .reset_index()
-    
-    team_ratings = df_rating.loc[((df_rating.hometeamid==team) |\
-                                  (df_rating.visteamid==team))]\
-        .groupby('season')['rating'].agg(['mean', 'median'])\
-        .rename({'mean':'AvgRating', 'median':'MedRating'}, axis = 'columns')\
-        .reset_index()
-    
-    team_stats = team_viewers\
-        .merge(team_attend, on = 'season')\
-        .merge(team_ratings, on = 'season')
-    
-    team_stats['team'] = team
-    
-    sec_season_stats.append(team_stats)
-    
-sec_season_stats = pd.concat(sec_season_stats).set_index('team').reset_index()
 
 
 app = dash.Dash(name = __name__, external_stylesheets=[dbc.themes.SLATE])
@@ -258,6 +203,8 @@ app.layout = dbc.Container(children = [
 ], fluid = True)
 
 
+
+#### Modal callback ####
 @app.callback(
     Output("helpModal", "is_open"),
     [Input("openHelpModal", "n_clicks"), Input("closeHelpModel", "n_clicks")],
@@ -267,6 +214,7 @@ def toggle_help_modal(n1, n2, is_open):
     if n1 or n2:
         return not is_open
     return is_open
+
 
 # This is the callback to populate our chained callback.
 # Basically the value in the first dropdown populates the values in the second drop down.
@@ -318,6 +266,7 @@ def update_match_graph(selected_team2, selected_team1, selectedMetric):
         )
         return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
 
+      
 @app.callback(
     [Output('teamStatsPlots', 'figure'),
      Output('viewersGauge', 'value'),
@@ -335,7 +284,7 @@ def update_match_graph(selected_team2, selected_team1, selectedMetric):
     [Input('selectedTeam', 'value'),
      Input('statsChoice', 'value')]
 )
-def create_right_plots(selectedTeam, statsChoice):
+def create_sidebar(selectedTeam, statsChoice):
     #### Columns ####
     viewer_col = np.where(statsChoice == 'avg', 'AvgViewers', 'MedViewers').tolist()
     attend_col = np.where(statsChoice == 'avg', 'AvgAttend', 'MedAttend').tolist()
@@ -408,6 +357,52 @@ def create_right_plots(selectedTeam, statsChoice):
            team_rating_stats[rating_col].values[0], min_rating, max_rating, teamColor)
 
 
+
+#### Matchup tab callbacks ####
+
+# This is the callback to populate our chained callback.
+# Basically the value in the first dropdown populates the values in the second drop down.
+@app.callback(
+    Output('match-team2-dd', 'options'),
+    Input('match-team1-dd', 'value')
+)
+def match_team2_set(chosen_team):
+    chosen_team = 'TENN'
+    matchup_df = df_viewers.loc[(df_viewers.hometeamid == chosen_team) | \
+                                (df_viewers.visteamid == chosen_team)]
+    return [{'label': c, 'value': c} \
+            for c in np.unique(matchup_df[['hometeamid', 'visteamid']].values.ravel())]
+# .values.ravel()
+
+
+   # return [{'label': matchup_df.hometeam[matchup_df.HOMEID == chosen_team].unique()[0],
+    #                    'value': chosen_team} for chosen_team in sec_teams],
+# Wait for Tanner here.
+# Make this 
+
+# This is creating the output for the barchart for the two teams.
+@app.callback(
+    Output('figure-matchup', 'figure'),
+    Input('match-team2-dd', 'value'),
+    Input('match-team1-dd', 'value')
+)
+def update_match_graph(selected_team2, selected_team1):
+    # selected_team2 = 'FRESNO'
+    # selected_team1 = 'TENN'
+    if len(selected_team2) == 0:
+        return dash.no_update
+    else: # Might have to get rid of hometeamid for homeid
+        matchup_df = df_viewers.loc[(df_viewers.hometeamid == selected_team1) | (df_viewers.visteamid == selected_team1)] # Gives me all selected_team1 games (UT In our example)
+        match_graph = matchup_df.loc[(matchup_df.hometeamid == selected_team2) | (matchup_df.visteamid == selected_team2)] # Gives us all matchups between Team1 and team2
+        fig = px.bar(
+            match_graph,
+            x = range(match_graph.shape[0]), # This gets our x for number games. 
+            y = 'viewers') #Okay, the dropnas might bork things but we shall see.
+        return fig #This should really figure-matchup unless it HAS to be fig. Won't run though.
+
+    
+
+#### Network tab callbacks ####
 @app.callback(
     Output('networkMetrics', 'figure'),
     [Input('selectedTeam', 'value'),
@@ -438,6 +433,9 @@ def create_network_plots(selectedTeam, selectedMetric):
     
     return fig
 
+
+
+#### Weather tab callbacks ####
 @app.callback(
     Output('start_time', 'figure'),
     [Input('selectedTeam', 'value'),
@@ -461,13 +459,14 @@ def update_weather(team, metric):
     return fig
 
 
+#### Rank tab callbacks ####
 @app.callback(
      Output('rankmetrics','figure'),
      [Input('selectedTeam','value'),
       Input('selectedyear','value')]
      
 )
-def create_rank_plot (selectedTeam, selectedyear):
+def create_rank_plot(selectedTeam, selectedyear):
     team_df = df.loc[df.HOMEID == selectedTeam]
     team_df = team_df[(team_df.homeweightedrank.isna() == False) & \
                       (team_df.visitorweightedrank.isna() == False)]
@@ -528,6 +527,10 @@ def create_rank_plot (selectedTeam, selectedyear):
     )
     
     return fig
+
+
+
+
 
 
 if __name__ == '__main__':
