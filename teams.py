@@ -1,4 +1,4 @@
-def team_colors():
+def import_team_colors():
     teamColorsDict = {
         'UA':'#A60C31', 
         'AR':'#9D2235', 
@@ -18,7 +18,7 @@ def team_colors():
     
     return teamColorsDict
 
-def sec_teams():
+def import_sec_teams():
     sec_teams = [
         'UA', 'AR', 'AU', 'UF', 'UGA', 'UK', 'LSU', 
         'MIZZU', 'MS', 'OM', 'SCAR','TAMU',
