@@ -4,7 +4,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import numpy as np
 
-from teams import team_colors
+from teams import import_team_colors
 teamColorsDict = import_team_colors()
 
 
