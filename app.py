@@ -47,7 +47,14 @@ helpModal = dbc.Modal([
     dbc.ModalHeader("Help"),
     dbc.ModalBody(children = [
         html.H5('Purpose of the app'),
-        html.H5('How to use the app')
+        html.P('This application seeks to help understand the branding of a chosen SEC team. The strength of a team\'s brand is determined by three primary factors--the attendance of games, the television viewership, and the television ratings. The application seeks to paint a picture of how a team is performing in these areas and how other variables, such as the weather or what network the game is being broadcasted on, affect these metrics.'),
+        html.H5('How to use the app'),
+        html.Ol(children = [
+            html.Li("Choose a team to evaluate at the top"),
+            html.Li("Analyze team's overall attendance, viwership, and ratings metrics in sidebar gauges"),
+            html.Li("Analyze team's metric trends in sidebar trend lines"),
+            html.Li("Analyze other variables that could be impacting metrics with various tabs in the tab box")
+        ])
     ]),
     dbc.ModalFooter(
         dbc.Button("Close", id="closeHelpModel", className="ml-auto")
@@ -155,7 +162,7 @@ app.layout = dbc.Container(children = [
                             figure = {})
                         ], width = 12)
                     ])
-                ], id = 'tabs', active_tab = 'network-tab')      
+                ], id = 'tabs', active_tab = 'rank-tab')      
             ], style = {'height':600}),
             dbc.RadioItems(
                 id = 'selectedMetric',
